@@ -17,7 +17,7 @@
   /* ── Configuration ── */
   var CARD_GAP       = 8;
   var CARD_W         = 291;            /* fixed card width (px) */
-  var CARD_COUNT     = 4;
+  var CARD_COUNT     = document.querySelectorAll('.hhub-card').length || 4;
   var EXPAND_DELTA   = 200;          /* extra width when a card is active */
 
   /* ── DOM ── */

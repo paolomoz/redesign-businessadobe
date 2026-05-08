@@ -141,7 +141,17 @@
      (the 10 non-bottom images). Bottom row is .hhub-card, flagged isBottom.
      Hub cards live at col indices [0,1,3,4] (col 2 has no bottom image).
      ═══════════════════════════════════════════ */
-  var HUB_COL_MAP = [0, 1, 3, 4];       // hub card index → grid column
+  // Hub card index → grid column. Map varies by hub-card count so cards
+  // distribute evenly across the 5 columns regardless of how many cards
+  // the page declares. Default (4 cards) skips the centre column.
+  var HUB_COL_MAPS = {
+    1: [2],
+    2: [1, 3],
+    3: [0, 2, 4],
+    4: [0, 1, 3, 4],
+    5: [0, 1, 2, 3, 4]
+  };
+  var HUB_COL_MAP = HUB_COL_MAPS[document.querySelectorAll('.hhub-card').length] || [0, 1, 3, 4];
   var allImages = [];
   var colGroups = [[], [], [], [], []];
   var bottomImages = [];
@@ -183,8 +193,18 @@
     hubCards.forEach(function (card, i) {
       var colIdx = HUB_COL_MAP[i];
       var img = card.querySelector('.hhub-card-img');
-      var w   = parseInt(img.getAttribute('width'), 10);
-      var h   = parseInt(img.getAttribute('height'), 10);
+      // Hub card may use only a fallback div (no <img>). Read intrinsic
+      // dimensions from a `data-aspect="W:H"` attribute on the card if present;
+      // otherwise default to the standard 490×320 hub-card ratio.
+      var w, h;
+      if (img) {
+        w = parseInt(img.getAttribute('width'), 10);
+        h = parseInt(img.getAttribute('height'), 10);
+      } else {
+        var aspect = (card.getAttribute('data-aspect') || '490:320').split(':');
+        w = parseInt(aspect[0], 10);
+        h = parseInt(aspect[1], 10);
+      }
       var data = {
         el:       card,                              // the .hhub-card itself is the GSAP target
         img:      img,
@@ -445,7 +465,8 @@
     });
     document.documentElement.style.setProperty('--hhub-media-h', cardMediaH + 'px');
 
-    var settleTrackW = 4 * CARD_W + 3 * FINAL_GAP;
+    var hubCount     = hubCards.length || 4;
+    var settleTrackW = hubCount * CARD_W + (hubCount - 1) * FINAL_GAP;
     var settleLeft   = (vw - settleTrackW) / 2;
     var cardH        = headerH + cardMediaH + footerH;
     /* Lock hub-router height so its top sits at cardTop even when all cards
